@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Personal Chat — Media Backend</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f5fa;
+      --bg-accent: #e9edff;
+      --card: #ffffff;
+      --card-soft: #f8f9fc;
+      --text: #141a29;
+      --muted: #667085;
+      --line: #e2e6ef;
+      --accent: #4f6bed;
+      --accent-soft: #eef1ff;
+      --ok: #15803d;
+      --ok-soft: #e9f8ef;
+      --warn: #b45309;
+      --warn-soft: #fff5e5;
+      --error: #b42318;
+      --error-soft: #fef0ef;
+      --info: #475467;
+      --info-soft: #eef2f6;
+      --off: #98a2b3;
+      --off-soft: #f2f4f7;
+      --shadow: 0 14px 40px rgba(23, 32, 56, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d111b;
+        --bg-accent: #151d33;
+        --card: #151b28;
+        --card-soft: #1a2231;
+        --text: #eef2f8;
+        --muted: #98a2b3;
+        --line: #273244;
+        --accent: #8ea2ff;
+        --accent-soft: #1d2949;
+        --ok: #6ee7a0;
+        --ok-soft: #10281c;
+        --warn: #fbbf6a;
+        --warn-soft: #2b2110;
+        --error: #ff9b93;
+        --error-soft: #2c1514;
+        --info: #b8c2d3;
+        --info-soft: #1d2634;
+        --off: #697586;
+        --off-soft: #1b2330;
+        --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% -10%, var(--bg-accent), transparent 38rem),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell {
+      width: min(1060px, 100% - 32px);
+      margin: 0 auto;
+      padding: 34px 0 44px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      flex: 0 0 auto;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #4f6bed, #7c5cff);
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      box-shadow: 0 10px 24px rgba(79, 107, 237, 0.28);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .refresh {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text);
+      padding: 9px 14px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .refresh:hover { border-color: var(--accent); }
+    .refresh:active { transform: translateY(1px); }
+    .refresh:disabled { opacity: 0.55; cursor: wait; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--info-soft);
+      color: var(--info);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 16%, transparent);
+    }
+
+    .pill.ok { background: var(--ok-soft); color: var(--ok); }
+    .pill.warning { background: var(--warn-soft); color: var(--warn); }
+    .pill.error { background: var(--error-soft); color: var(--error); }
+    .pill.loading { background: var(--info-soft); color: var(--muted); }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--card);
+      padding: 25px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -80px;
+      top: -110px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: clamp(23px, 4vw, 32px);
+      line-height: 1.15;
+      letter-spacing: -0.035em;
+    }
+
+    .hero .subline {
+      margin: 9px 0 0;
+      max-width: 650px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .endpoints {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 19px;
+    }
+
+    .endpoint {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 11px;
+      background: var(--card-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      text-decoration: none;
+    }
+
+    .endpoint:hover { border-color: var(--accent); color: var(--accent); }
+
+    .endpoint b {
+      color: var(--text);
+      font-family: inherit;
+      font-weight: 600;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 28px 0 11px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .feature {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--card);
+      padding: 15px;
+      min-height: 106px;
+    }
+
+    .feature-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 7px;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--off);
+    }
+
+    .status-dot.ok { background: var(--ok); }
+    .status-dot.warn { background: var(--warn); }
+    .status-dot.error { background: var(--error); }
+    .status-dot.info { background: var(--accent); }
+    .status-dot.off { background: var(--off); }
+
+    .feature h4 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .feature .feature-status {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .feature .feature-status.ok { color: var(--ok); }
+    .feature .feature-status.warn { color: var(--warn); }
+    .feature .feature-status.error { color: var(--error); }
+    .feature .feature-status.info { color: var(--accent); }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: var(--card);
+      overflow: hidden;
+    }
+
+    .check-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 0.75fr) minmax(0, 1.6fr);
+      gap: 16px;
+      align-items: start;
+      padding: 13px 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .check-row:first-child { border-top: 0; }
+
+    .check-name {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .check-message {
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .check-message.error { color: var(--error); }
+    .check-message.warn { color: var(--warn); }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--line);
+    }
+
+    .config-item {
+      min-width: 0;
+      padding: 14px 16px;
+      background: var(--card);
+    }
+
+    .config-item dt {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .config-item dd {
+      margin: 0;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .config-item dd.mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .note {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    .loading-card {
+      border: 1px dashed var(--line);
+      border-radius: 15px;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .check-row { grid-template-columns: 1fr; gap: 5px; }
+    }
+
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 22px, 1060px); padding-top: 20px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .actions { width: 100%; justify-content: space-between; }
+      .feature-grid, .config-grid { grid-template-columns: 1fr; }
+      .hero { padding: 20px; border-radius: 17px; }
+      .brand h1 { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">PC</div>
+        <div>
+          <h1>Personal Chat</h1>
+          <p>Media backend dashboard</p>
+        </div>
+      </div>
+      <div class="actions">
+        <span class="pill loading" id="overall">Checking</span>
+        <button class="refresh" id="refresh" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">Deployment status</p>
+        <h2 id="headline">Checking the backend…</h2>
+        <p class="subline" id="subline">Reading diagnostics from status.php.</p>
+        <div class="endpoints">
+          <a class="endpoint" href="health.php"><b>health.php</b> health check</a>
+          <a class="endpoint" href="upload.php"><b>upload.php</b> upload</a>
+          <a class="endpoint" href="file.php"><b>file.php</b> signed files</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-title">
+      <h3>Features</h3>
+      <span>Ready, warning and error states</span>
+    </div>
+    <section class="feature-grid" id="features" aria-live="polite">
+      <div class="loading-card">Loading features…</div>
+    </section>
+
+    <div class="section-title">
+      <h3>Diagnostics</h3>
+      <span id="updated">Not checked yet</span>
+    </div>
+    <section class="panel" id="checks" aria-live="polite">
+      <div class="loading-card">Loading diagnostics…</div>
+    </section>
+
+    <div class="section-title">
+      <h3>Configuration</h3>
+      <span>Secrets are never shown</span>
+    </div>
+    <section class="panel">
+      <dl class="config-grid" id="config">
+        <div class="config-item">
+          <dt>Status</dt>
+          <dd>Waiting for backend…</dd>
+        </div>
+      </dl>
+    </section>
+
+    <p class="note">
+      This public page reports configuration health only. It does not expose API keys,
+      file secrets, tokens or absolute server paths. If the backend is not configured yet,
+      copy <code>config.example.php</code> to <code>config.php</code> outside the public folder.
+    </p>
+
+    <footer class="footer">
+      <span>Personal Chat media backend</span>
+      <span>Auto-refreshes every 30 seconds · <a href="status.php">status.php</a></span>
+    </footer>
+  </main>
+
+  <script>
+    const els = {
+      overall: document.getElementById("overall"),
+      headline: document.getElementById("headline"),
+      subline: document.getElementById("subline"),
+      features: document.getElementById("features"),
+      checks: document.getElementById("checks"),
+      config: document.getElementById("config"),
+      updated: document.getElementById("updated"),
+      refresh: document.getElementById("refresh")
+    };
+
+    const statusText = {
+      ok: "Working",
+      warn: "Needs attention",
+      error: "Error",
+      info: "Info",
+      off: "Disabled"
+    };
+
+    function make(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes) || 0;
+      if (value < 1024) return value + " B";
+      const units = ["KB", "MB", "GB", "TB"];
+      let size = value / 1024;
+      let unit = 0;
+      while (size >= 1024 && unit < units.length - 1) {
+        size /= 1024;
+        unit++;
+      }
+      return size.toFixed(size >= 10 ? 0 : 1) + " " + units[unit];
+    }
+
+    function formatDate(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return "Just now";
+      return "Checked " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function renderFeatures(features) {
+      els.features.replaceChildren();
+      if (!Array.isArray(features) || features.length === 0) {
+        els.features.append(make("div", "loading-card", "No feature information returned."));
+        return;
+      }
+
+      for (const feature of features) {
+        const status = ["ok", "warn", "error", "info", "off"].includes(feature.status)
+          ? feature.status
+          : "off";
+        const card = make("article", "feature");
+        const head = make("div", "feature-head");
+        head.append(make("span", "status-dot " + status));
+        head.append(make("h4", "", feature.label || "Feature"));
+        card.append(head);
+        card.append(make("p", "", feature.detail || ""));
+        card.append(make("span", "feature-status " + status, statusText[status] || status));
+        els.features.append(card);
+      }
+    }
+
+    function renderChecks(checks) {
+      els.checks.replaceChildren();
+      if (!Array.isArray(checks) || checks.length === 0) {
+        els.checks.append(make("div", "loading-card", "No diagnostics returned."));
+        return;
+      }
+
+      for (const check of checks) {
+        const status = ["ok", "warn", "error", "info"].includes(check.status)
+          ? check.status
+          : "error";
+        const row = make("div", "check-row");
+        const name = make("div", "check-name");
+        name.append(make("span", "status-dot " + status));
+        name.append(make("span", "", check.label || "Check"));
+        row.append(name);
+        row.append(make("div", "check-message " + status, check.message || ""));
+        els.checks.append(row);
+      }
+    }
+
+    function addConfigItem(label, value, mono) {
+      const item = make("div", "config-item");
+      item.append(make("dt", "", label));
+      item.append(make("dd", mono ? "mono" : "", value));
+      els.config.append(item);
+    }
+
+    function renderConfig(config) {
+      els.config.replaceChildren();
+      const data = config || {};
+      addConfigItem("Configuration source", data.config_source || "Not configured");
+      addConfigItem("Public backend URL", data.public_base_url || "Not configured");
+      addConfigItem("Firebase Auth host", data.auth_host || "Not configured");
+      addConfigItem(
+        "Allowed frontend origins",
+        Array.isArray(data.allowed_origins) && data.allowed_origins.length
+          ? data.allowed_origins.join(", ")
+          : "None configured"
+      );
+      addConfigItem(
+        "Upload limits",
+        "Images " + formatBytes(data.max_image_bytes) + " · Voice " + formatBytes(data.max_audio_bytes)
+      );
+      addConfigItem(
+        "PHP limits",
+        "Upload " + formatBytes(data.php_upload_max_bytes) + " · POST " + formatBytes(data.php_post_max_bytes)
+      );
+      addConfigItem(
+        "Stored media",
+        (data.storage_files || 0) + " files · " + formatBytes(data.storage_bytes),
+        true
+      );
+    }
+
+    function setOverall(overall) {
+      const classes = ["pill", overall];
+      els.overall.className = classes.join(" ");
+      els.overall.textContent = overall === "ok"
+        ? "Backend ready"
+        : overall === "warning"
+          ? "Running with warnings"
+          : overall === "error"
+            ? "Setup required"
+            : "Checking";
+    }
+
+    function render(data) {
+      const overall = ["ok", "warning", "error"].includes(data.overall) ? data.overall : "error";
+      setOverall(overall);
+
+      if (overall === "ok") {
+        els.headline.textContent = "Backend is deployed and ready.";
+      } else if (overall === "warning") {
+        els.headline.textContent = "Backend is online with warnings.";
+      } else {
+        els.headline.textContent = "Backend is online, but setup is incomplete.";
+      }
+
+      const errors = Number(data.errors) || 0;
+      const warnings = Number(data.warnings) || 0;
+      els.subline.textContent =
+        errors + " error" + (errors === 1 ? "" : "s") + " · " +
+        warnings + " warning" + (warnings === 1 ? "" : "s") +
+        " · PHP " + (data.php_version || "unknown");
+
+      renderFeatures(data.features);
+      renderChecks(data.checks);
+      renderConfig(data.config);
+      els.updated.textContent = formatDate(data.checked_at);
+    }
+
+    function renderFailure(message) {
+      setOverall("error");
+      els.headline.textContent = "Cannot read backend status.";
+      els.subline.textContent = message;
+      els.features.replaceChildren(make("div", "loading-card", message));
+      els.checks.replaceChildren(make("div", "loading-card", message));
+      els.config.replaceChildren();
+      addConfigItem("Status", "status.php could not be reached");
+      els.updated.textContent = "Check failed";
+    }
+
+    async function loadStatus() {
+      els.refresh.disabled = true;
+      els.overall.className = "pill loading";
+      els.overall.textContent = "Checking";
+
+      try {
+        const response = await fetch("status.php", {
+          cache: "no-store",
+          headers: { Accept: "application/json" }
+        });
+        if (!response.ok) {
+          throw new Error("status.php returned HTTP " + response.status);
+        }
+        const data = await response.json();
+        render(data);
+      } catch (error) {
+        renderFailure(
+          error instanceof Error
+            ? error.message
+            : "status.php could not be reached."
+        );
+      } finally {
+        els.refresh.disabled = false;
+      }
+    }
+
+    els.refresh.addEventListener("click", loadStatus);
+    loadStatus();
+    setInterval(loadStatus, 30000);
+  </script>
+</body>
+</html>
