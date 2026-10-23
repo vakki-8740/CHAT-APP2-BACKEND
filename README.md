@@ -103,7 +103,7 @@ Fill in `config.php`:
 - `file_url_secret` — random 64-character hex string. Rotating it invalidates
   existing media URLs.
 - `storage_dir` — defaults to `backend-php/storage`.
-- size limits — defaults are 8 MB images / 15 MB audio.
+- size limits — defaults are 10 MB images / 15 MB audio.
 
 Make the storage directory writable and protect it:
 

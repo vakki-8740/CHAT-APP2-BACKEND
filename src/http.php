@@ -144,7 +144,7 @@ function load_backend_config(): array
         'auth_lookup_url' => 'https://identitytoolkit.googleapis.com/v1/accounts:lookup',
         'storage_dir' => dirname(__DIR__) . '/storage',
         'allowed_origins' => [],
-        'max_image_bytes' => 8 * 1024 * 1024,
+        'max_image_bytes' => 10 * 1024 * 1024,
         'max_audio_bytes' => 15 * 1024 * 1024,
         'file_url_ttl' => 3600
     ];

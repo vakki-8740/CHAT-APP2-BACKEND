@@ -31,6 +31,6 @@ return [
     // Keep this directory outside the public document root.
     'storage_dir' => __DIR__ . '/storage',
 
-    'max_image_bytes' => 8 * 1024 * 1024,
+    'max_image_bytes' => 10 * 1024 * 1024,
     'max_audio_bytes' => 15 * 1024 * 1024
 ];

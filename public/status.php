@@ -332,7 +332,7 @@ foreach (['upload.php', 'file.php', 'health.php'] as $endpointFile) {
     }
 }
 
-$maxImage = (int) ($config['max_image_bytes'] ?? 8 * 1024 * 1024);
+$maxImage = (int) ($config['max_image_bytes'] ?? 10 * 1024 * 1024);
 $maxAudio = (int) ($config['max_audio_bytes'] ?? 15 * 1024 * 1024);
 $uploadMax = parse_ini_bytes((string) ini_get('upload_max_filesize'));
 $postMax = parse_ini_bytes((string) ini_get('post_max_size'));
